@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soundwave – Din Musik</title>
+<title>Sprotify – Din Musik</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Circular+Std:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap');
@@ -506,7 +506,7 @@
 <aside class="sidebar">
   <div class="logo">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-    Soundwave
+    Sprotify
   </div>
 
   <div class="nav-section">
@@ -666,15 +666,15 @@ async function load() {
     const { data: tracksData } = await supabaseClient.from('tracks').select('*');
     state.tracks = tracksData || [];
 
-    const savedVolume = localStorage.getItem('soundwave_volume');
+    const savedVolume = localStorage.getItem('sprotify_volume');
     if (savedVolume !== null) {
       state.volume = parseFloat(savedVolume);
     }
-    const savedShuffle = localStorage.getItem('soundwave_shuffle');
+    const savedShuffle = localStorage.getItem('sprotify_shuffle');
     if (savedShuffle !== null) {
       state.shuffle = savedShuffle === 'true';
     }
-    const savedRepeat = localStorage.getItem('soundwave_repeat');
+    const savedRepeat = localStorage.getItem('sprotify_repeat');
     if (savedRepeat !== null) {
       state.repeat = savedRepeat;
     }
@@ -832,7 +832,7 @@ function renderMain() {
     contentArea.innerHTML += `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
-        <h3>Välkommen till Soundwave!</h3>
+        <h3>Välkommen till Sprotify!</h3>
         <p>Ladda upp din musik för att börja lyssna</p>
       </div>`;
   }
@@ -963,7 +963,7 @@ function playPlaylist(pid) {
 function toggleShuffle() {
   state.shuffle = !state.shuffle;
   document.getElementById('shuffleBtn').classList.toggle('active', state.shuffle);
-  localStorage.setItem('soundwave_shuffle', state.shuffle);
+  localStorage.setItem('sprotify_shuffle', state.shuffle);
 }
 
 function toggleRepeat() {
@@ -972,7 +972,7 @@ function toggleRepeat() {
   state.repeat = next;
   const btn = document.getElementById('repeatBtn');
   btn.classList.toggle('active', next !== 'none');
-  localStorage.setItem('soundwave_repeat', next);
+  localStorage.setItem('sprotify_repeat', next);
 }
 
 function seekTo(e) {
@@ -990,7 +990,7 @@ function setVolume(e) {
   audio.volume = pct;
   document.getElementById('volumeFill').style.width = (pct * 100) + '%';
   state.muted = false;
-  localStorage.setItem('soundwave_volume', pct);
+  localStorage.setItem('sprotify_volume', pct);
 }
 
 function toggleMute() {
