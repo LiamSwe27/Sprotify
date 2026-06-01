@@ -35,7 +35,6 @@
     user-select: none;
   }
 
-  /* ── SIDEBAR ── */
   .sidebar {
     background: var(--sidebar);
     grid-row: 1;
@@ -117,7 +116,6 @@
   }
   .new-playlist-btn:hover { border-color: var(--green); color: var(--green); }
 
-  /* ── MAIN ── */
   .main {
     grid-row: 1;
     overflow-y: auto;
@@ -158,7 +156,6 @@
 
   .content-area { padding: 16px 32px 32px; }
 
-  /* ── PLAYLIST VIEW ── */
   .playlist-header {
     display: flex;
     align-items: flex-end;
@@ -201,7 +198,6 @@
   }
   .play-all-btn:hover { transform: scale(1.08); background: var(--green-dark); }
 
-  /* ── TRACK LIST ── */
   .track-list-header {
     display: grid;
     grid-template-columns: 40px 1fr 160px 60px;
@@ -279,7 +275,6 @@
   }
   .track-action-btn:hover { color: var(--text); }
 
-  /* ── CARDS ── */
   .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; margin-top: 8px; }
   .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 32px; }
   .card {
@@ -307,7 +302,6 @@
   .card-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .card-sub { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* ── PLAYER ── */
   .player {
     grid-column: 1 / -1;
     grid-row: 2;
@@ -397,7 +391,6 @@
   .volume-bar { width: 80px; height: 4px; background: var(--border); border-radius: 2px; cursor: pointer; }
   .volume-fill { height: 100%; background: var(--muted); border-radius: 2px; }
 
-  /* ── MODALS ── */
   .modal-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,.7);
@@ -640,7 +633,10 @@
 <audio id="audioPlayer"></audio>
 
 <script>
-// ── STATE ──
+const supabaseUrl = "https://zsgvkgiakfadrlhfjhjv.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzZ3ZrZ2lha2ZhZHJsaGZqaGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzE2NTUsImV4cCI6MjA5NTkwNzY1NX0.etPjB4_FrMQqRxfOPOrHmqpLyMYla3rO_xBVt-c0FFM";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
 let state = {
   tracks: [],
   playlists: [],
@@ -650,7 +646,7 @@ let state = {
   queueIndex: -1,
   isPlaying: false,
   shuffle: false,
-  repeat: false, 
+  repeat: 'none',
   volume: 0.8,
   muted: false,
   view: 'home'
@@ -662,65 +658,59 @@ let ctxTrackId = null;
 let ctxPlaylistId = null;
 const audio = document.getElementById('audioPlayer');
 
-// ── SUPABASE CONFIGURATION ──
-// OBS! Ersätt texten nedanför med ditt riktiga Project ID och din Anon KEY från Supabase!
-const SUPABASE_PROJECT_ID = "zsgvkgiakfadrlhfjhjv"; 
-const SUPABASE_URL = `https://zsgvkgiakfadrlhfjhjv.supabase.co/rest/v1/`;
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzZ3ZrZ2lha2ZhZHJsaGZqaGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzE2NTUsImV4cCI6MjA5NTkwNzY1NX0.etPjB4_FrMQqRxfOPOrHmqpLyMYla3rO_xBVt-c0FFM";
-
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ── STORAGE & SYNC (Ersätter localStorage med Supabase) ──
 async function load() {
   try {
-    // 1. Hämta alla spellistor live från Supabase
-    const { data: plData, error: plError } = await supabase.from('playlists').select('*');
-    if (plError) throw plError;
-    state.playlists = plData || [];
+    const { data: playlistsData } = await supabase.from('playlists').select('*');
+    state.playlists = playlistsData || [];
 
-    // 2. Hämta alla låtar live från Supabase
-    const { data: trData, error: trError } = await supabase.from('tracks').select('*');
-    if (trError) throw trError;
-    state.tracks = trData || [];
+    const { data: tracksData } = await supabase.from('tracks').select('*');
+    state.tracks = tracksData || [];
 
-    // Återställ spelarvolym lokalt
+    const savedVolume = localStorage.getItem('soundwave_volume');
+    if (savedVolume !== null) {
+      state.volume = parseFloat(savedVolume);
+    }
+    const savedShuffle = localStorage.getItem('soundwave_shuffle');
+    if (savedShuffle !== null) {
+      state.shuffle = savedShuffle === 'true';
+    }
+    const savedRepeat = localStorage.getItem('soundwave_repeat');
+    if (savedRepeat !== null) {
+      state.repeat = savedRepeat;
+    }
+
     audio.volume = state.volume;
     document.getElementById('volumeFill').style.width = (state.volume * 100) + '%';
-    
+    document.getElementById('shuffleBtn').classList.toggle('active', state.shuffle);
+    document.getElementById('repeatBtn').classList.toggle('active', state.repeat !== 'none');
+
     renderAll();
-  } catch(e) {
-    console.error("Kunde inte hämta data från Supabase:", e);
-  }
+  } catch(e) {}
 }
 
-// Sparar en enskild låt till databasen efter lyckad lagring av filen
-async function saveTrackToDatabase(track) {
-  const { error } = await supabase
-    .from('tracks')
-    .insert([{
-      id: track.id,
-      name: track.name,
-      artist: track.artist,
-      url: track.url,
-      playlists: track.playlists,
-      duration: track.duration
-    }]);
-
-  if (error) console.error("Kunde inte spara låten i databasen:", error);
-}
-
-// ── HELPERS ──
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
 function formatTime(s) {
-  if (isNaN(s) || s === null) return '0:00';
+  if (isNaN(s)) return '0:00';
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
   return m + ':' + String(sec).padStart(2, '0');
 }
 
 function getTracksByPlaylist(pid) {
   if (!pid) return state.tracks;
-  return state.tracks.filter(t => t.playlists && t.playlists.includes(pid));
+  return state.tracks.filter(t => {
+    if (!t.playlists) return false;
+    if (Array.isArray(t.playlists)) return t.playlists.includes(pid);
+    if (typeof t.playlists === 'string') {
+      try {
+        const parsed = JSON.parse(t.playlists);
+        return Array.isArray(parsed) && parsed.includes(pid);
+      } catch(e) {
+        return t.playlists === pid;
+      }
+    }
+    return false;
+  });
 }
 
 function getPlaylist(id) { return state.playlists.find(p => p.id === id); }
@@ -731,7 +721,6 @@ function coverEmoji(idx) {
   return emojis[idx % emojis.length];
 }
 
-// ── VIEWS & RENDERING ──
 function showView(view, playlistId) {
   state.view = view;
   state.currentPlaylistId = playlistId || null;
@@ -808,7 +797,6 @@ function renderMain() {
     return;
   }
 
-  // HOME VIEW
   viewTitle.textContent = 'Hem';
   contentArea.innerHTML = '';
 
@@ -859,7 +847,7 @@ function buildTrackList(tracks, playlistId) {
 
   const header = document.createElement('div');
   header.className = 'track-list-header';
-  header.innerHTML = `<span>#</span><span>Titel</span><span>Spellista</span><span>Tid</span>`;
+  header.innerHTML = `<span>35</span><span>Titel</span><span>Spellista</span><span>Tid</span>`;
   container.appendChild(header);
 
   tracks.forEach((t, i) => {
@@ -867,7 +855,15 @@ function buildTrackList(tracks, playlistId) {
     row.className = 'track-row' + (state.currentTrackId === t.id ? ' playing' : '');
     row.dataset.id = t.id;
 
-    const plNames = (t.playlists || []).map(pid => {
+    let playlistArray = [];
+    if (t.playlists) {
+      if (Array.isArray(t.playlists)) playlistArray = t.playlists;
+      else if (typeof t.playlists === 'string') {
+        try { playlistArray = JSON.parse(t.playlists); } catch(e) { playlistArray = [t.playlists]; }
+      }
+    }
+
+    const plNames = playlistArray.map(pid => {
       const pl = getPlaylist(pid);
       return pl ? pl.name : '';
     }).filter(Boolean).join(', ');
@@ -907,7 +903,6 @@ function buildTrackList(tracks, playlistId) {
   return container;
 }
 
-// ── PLAYBACK LOGIC ──
 function playTrackFromList(list, idx) {
   state.queue = list.map(t => t.id);
   state.queueIndex = idx;
@@ -927,23 +922,6 @@ function loadTrack(id) {
   renderAll();
 }
 
-function playPlaylist(pid) {
-  const tracks = getTracksByPlaylist(pid);
-  if (tracks.length > 0) playTrackFromList(tracks, 0);
-}
-
-function nextTrack() {
-  if (state.queue.length === 0) return;
-  state.queueIndex = (state.queueIndex + 1) % state.queue.length;
-  loadTrack(state.queue[state.queueIndex]);
-}
-
-function prevTrack() {
-  if (state.queue.length === 0) return;
-  state.queueIndex = (state.queueIndex - 1 + state.queue.length) % state.queue.length;
-  loadTrack(state.queue[state.queueIndex]);
-}
-
 function togglePlay() {
   if (!state.currentTrackId) return;
   if (audio.paused) { audio.play(); state.isPlaying = true; }
@@ -959,141 +937,175 @@ function updatePlayIcon() {
     : '<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>';
 }
 
+function nextTrack() {
+  if (state.queue.length === 0) return;
+  if (state.shuffle) {
+    state.queueIndex = Math.floor(Math.random() * state.queue.length);
+  } else {
+    state.queueIndex = (state.queueIndex + 1) % state.queue.length;
+  }
+  loadTrack(state.queue[state.queueIndex]);
+}
+
+function prevTrack() {
+  if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+  if (state.queue.length === 0) return;
+  state.queueIndex = (state.queueIndex - 1 + state.queue.length) % state.queue.length;
+  loadTrack(state.queue[state.queueIndex]);
+}
+
+function playPlaylist(pid) {
+  const tracks = getTracksByPlaylist(pid);
+  if (tracks.length === 0) return;
+  playTrackFromList(tracks, 0);
+}
+
 function toggleShuffle() {
   state.shuffle = !state.shuffle;
   document.getElementById('shuffleBtn').classList.toggle('active', state.shuffle);
+  localStorage.setItem('soundwave_shuffle', state.shuffle);
 }
 
 function toggleRepeat() {
-  state.repeat = !state.repeat;
-  document.getElementById('repeatBtn').classList.toggle('active', state.repeat);
+  const modes = ['none', 'all', 'one'];
+  const next = modes[(modes.indexOf(state.repeat) + 1) % 3];
+  state.repeat = next;
+  const btn = document.getElementById('repeatBtn');
+  btn.classList.toggle('active', next !== 'none');
+  localStorage.setItem('soundwave_repeat', next);
 }
-
-audio.addEventListener('timeupdate', () => {
-  const cur = audio.currentTime, dur = audio.duration;
-  document.getElementById('currentTime').textContent = formatTime(cur);
-  if (!isNaN(dur)) {
-    document.getElementById('totalTime').textContent = formatTime(dur);
-    document.getElementById('progressFill').style.width = (cur / dur * 100) + '%';
-  }
-});
-
-audio.addEventListener('ended', () => {
-  if (state.repeat) { audio.currentTime = 0; audio.play(); }
-  else { nextTrack(); }
-});
 
 function seekTo(e) {
   const bar = document.getElementById('progressBar');
-  const pct = e.offsetX / bar.offsetWidth;
-  if (!isNaN(audio.duration)) audio.currentTime = pct * audio.duration;
+  const rect = bar.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  audio.currentTime = pct * audio.duration;
 }
 
 function setVolume(e) {
   const bar = document.getElementById('volumeBar');
-  let pct = e.offsetX / bar.offsetWidth;
-  if (pct < 0) pct = 0; if (pct > 1) pct = 1;
+  const rect = bar.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
   state.volume = pct;
-  audio.volume = state.muted ? 0 : pct;
+  audio.volume = pct;
   document.getElementById('volumeFill').style.width = (pct * 100) + '%';
+  state.muted = false;
+  localStorage.setItem('soundwave_volume', pct);
 }
 
 function toggleMute() {
   state.muted = !state.muted;
-  audio.volume = state.muted ? 0 : state.volume;
-  document.getElementById('volIcon').style.opacity = state.muted ? 0.5 : 1;
+  audio.muted = state.muted;
 }
 
-// ── MODALS CONTROL ──
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+audio.addEventListener('timeupdate', () => {
+  if (!audio.duration) return;
+  const pct = (audio.currentTime / audio.duration) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
+  document.getElementById('totalTime').textContent = formatTime(audio.duration);
+});
+
+audio.addEventListener('ended', () => {
+  if (state.repeat === 'one') { audio.currentTime = 0; audio.play(); return; }
+  if (state.queueIndex < state.queue.length - 1 || state.repeat === 'all') {
+    nextTrack();
+  } else {
+    state.isPlaying = false;
+    updatePlayIcon();
+    renderAll();
+  }
+});
+
+audio.addEventListener('play', () => { state.isPlaying = true; updatePlayIcon(); renderAll(); });
+audio.addEventListener('pause', () => { state.isPlaying = false; updatePlayIcon(); renderAll(); });
+
+function openUpload() { document.getElementById('uploadModal').classList.add('open'); pendingFiles = []; renderUploadList(); }
+
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-function openUpload() { openModal('uploadModal'); }
-function openNewPlaylist() { openModal('playlistModal'); }
-
-// ── HANDLE FILE UPLOADS TO SUPABASE ──
-function handleFiles(files) {
-  const list = document.getElementById('uploadList');
-  list.innerHTML = '';
-  pendingFiles = Array.from(files);
-  pendingFiles.forEach(f => {
-    const item = document.createElement('div');
-    item.className = 'upload-item';
-    item.innerHTML = `<span>${f.name}</span><span>${(f.size/1024/1024).toFixed(1)} MB</span>`;
-    list.appendChild(item);
-  });
-}
-
-// Dra och släpp-stöd
 const dropZone = document.getElementById('dropZone');
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
+  e.preventDefault(); dropZone.classList.remove('drag-over');
   handleFiles(e.dataTransfer.files);
 });
 
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if (f.type.startsWith('audio/') || /\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(f.name)) {
+      pendingFiles.push(f);
+    }
+  });
+  renderUploadList();
+}
+
+function renderUploadList() {
+  const el = document.getElementById('uploadList');
+  el.innerHTML = pendingFiles.map((f, i) => `
+    <div class="upload-item">
+      <span>${f.name}</span>
+      <button class="track-action-btn" onclick="pendingFiles.splice(${i},1);renderUploadList()">✕</button>
+    </div>`).join('');
+}
+
 async function confirmUpload() {
   if (pendingFiles.length === 0) { closeModal('uploadModal'); return; }
-  
   const plName = document.getElementById('uploadPlaylist').value.trim();
   let playlistId = null;
-  
+
   if (plName) {
     let pl = state.playlists.find(p => p.name.toLowerCase() === plName.toLowerCase());
-    if (!pl) { 
+    if (!pl) {
       playlistId = uid();
-      pl = { id: playlistId, name: plName, desc: '' }; 
+      pl = { id: playlistId, name: plName, desc: '' };
       state.playlists.push(pl);
-      // Spara spellistan i databasen
       await supabase.from('playlists').insert([pl]);
     } else {
       playlistId = pl.id;
     }
   }
 
-  // Loopa igenom de valda filerna för att ladda upp till lagringen (Bucket)
   for (const file of pendingFiles) {
-    const trackId = uid();
-    // Skapa ett filnamn utan konstiga tecken
-    const cleanFileName = `${trackId}-${file.name.replace(/\s+/g, '_')}`;
+    const id = uid();
+    const cleanName = file.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ');
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${id}.${fileExt}`;
 
-    // 1. Skicka filen till Supabase Storage-bucket kallad 'music'
-    const { data: storageData, error: storageError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('music')
-      .upload(cleanFileName, file);
+      .upload(filePath, file);
 
-    if (storageError) {
-      console.error("Kunde inte ladda upp filen:", storageError);
-      alert(`Misslyckades att ladda upp ${file.name}. Kontrollera din Supabase Storage-bucket!`);
-      continue;
-    }
+    if (uploadError) continue;
 
-    // 2. Hämta filens permanenta publika URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data: urlData } = supabase.storage
       .from('music')
-      .getPublicUrl(cleanFileName);
+      .getPublicUrl(filePath);
 
-    const name = file.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ');
-    
-    const track = { 
-      id: trackId, 
-      name: name, 
-      artist: 'Okänd artist', 
-      url: publicUrl, 
-      playlists: playlistId ? [playlistId] : [], 
-      duration: null 
+    const publicUrl = urlData.publicUrl;
+
+    const track = {
+      id: id,
+      name: cleanName,
+      artist: 'Okänd artist',
+      url: publicUrl,
+      playlists: playlistId ? [playlistId] : [],
+      duration: 0
     };
 
-    // 3. Räkna ut låtlängden (duration) live innan vi sparar raden i databasen
     const tmpAudio = new Audio(publicUrl);
-    tmpAudio.addEventListener('loadedmetadata', async () => {
-      track.duration = tmpAudio.duration;
-      state.tracks.push(track);
-      await saveTrackToDatabase(track);
-      renderAll();
+    await new Promise((resolve) => {
+      tmpAudio.addEventListener('loadedmetadata', () => {
+        track.duration = tmpAudio.duration;
+        resolve();
+      });
+      tmpAudio.addEventListener('error', () => resolve());
+      setTimeout(resolve, 3000);
     });
+
+    state.tracks.push(track);
+    await supabase.from('tracks').insert([track]);
   }
 
   closeModal('uploadModal');
@@ -1102,44 +1114,33 @@ async function confirmUpload() {
   showView('library');
 }
 
+function openNewPlaylist() { document.getElementById('playlistName').value = ''; document.getElementById('playlistDesc').value = ''; document.getElementById('playlistModal').classList.add('open'); setTimeout(() => document.getElementById('playlistName').focus(), 100); }
+
 async function confirmNewPlaylist() {
   const name = document.getElementById('playlistName').value.trim();
-  const desc = document.getElementById('playlistDesc').value.trim();
   if (!name) return;
-  const pl = { id: uid(), name, desc };
+  const pl = { id: uid(), name, desc: document.getElementById('playlistDesc').value.trim() };
   state.playlists.push(pl);
-  
-  // Spara spellistan i Supabase
   await supabase.from('playlists').insert([pl]);
-  
   closeModal('playlistModal');
-  document.getElementById('playlistName').value = '';
-  document.getElementById('playlistDesc').value = '';
   showView('playlist', pl.id);
 }
 
-// ── CONTEXT MENU (Högerklick/Mer-knapp) ──
 function openContextMenu(e, trackId, playlistId) {
-  e.preventDefault();
+  e.stopPropagation();
   ctxTrackId = trackId;
-  ctxPlaylistId = playlistId;
+  ctxPlaylistId = playlistId || null;
   const menu = document.getElementById('contextMenu');
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 150) + 'px';
   menu.classList.add('open');
-  menu.style.left = e.clientX + 'px';
-  menu.style.top = e.clientY + 'px';
-  
-  const delEl = document.getElementById('ctxDelete');
-  if (playlistId) {
-    delEl.textContent = '🗑 Ta bort från spellista';
-  } else {
-    delEl.textContent = '🗑 Ta bort permanent';
-  }
 }
 
 function closeContextMenu() { document.getElementById('contextMenu').classList.remove('open'); }
 
 function ctxPlay() {
-  if (ctxTrackId) loadTrack(ctxTrackId);
+  const t = getTrack(ctxTrackId);
+  if (t) { state.queue = [t.id]; state.queueIndex = 0; loadTrack(t.id); }
   closeContextMenu();
 }
 
@@ -1147,52 +1148,46 @@ async function ctxAddToPlaylist() {
   const name = prompt('Lägg till i spellista (skriv namn):');
   if (!name) { closeContextMenu(); return; }
   let pl = state.playlists.find(p => p.name.toLowerCase() === name.toLowerCase());
-  if (!pl) { 
-    pl = { id: uid(), name, desc: '' }; 
+  if (!pl) {
+    pl = { id: uid(), name, desc: '' };
     state.playlists.push(pl);
     await supabase.from('playlists').insert([pl]);
   }
   const t = getTrack(ctxTrackId);
-  if (t && !t.playlists.includes(pl.id)) { 
-    t.playlists.push(pl.id); 
-    // Uppdatera låtens spellistor i databasen
-    await supabase.from('tracks').update({ playlists: t.playlists }).eq('id', t.id);
+  if (t) {
+    let playlistArray = [];
+    if (t.playlists) {
+      if (Array.isArray(t.playlists)) playlistArray = t.playlists;
+      else if (typeof t.playlists === 'string') {
+        try { playlistArray = JSON.parse(t.playlists); } catch(e) { playlistArray = [t.playlists]; }
+      }
+    }
+    if (!playlistArray.includes(pl.id)) {
+      playlistArray.push(pl.id);
+      t.playlists = playlistArray;
+      await supabase.from('tracks').update({ playlists: playlistArray }).eq('id', t.id);
+    }
   }
-  renderAll(); 
+  renderAll();
   closeContextMenu();
 }
 
 async function ctxDelete() {
   if (!ctxTrackId) { closeContextMenu(); return; }
-  
-  if (ctxPlaylistId) {
-    // Ta bara bort låten från den aktuella spellistan
-    const t = getTrack(ctxTrackId);
-    if (t) {
-      t.playlists = t.playlists.filter(id => id !== ctxPlaylistId);
-      await supabase.from('tracks').update({ playlists: t.playlists }).eq('id', t.id);
-    }
-  } else {
-    // Ta bort helt och hållet överallt (permanent)
-    if (!confirm('Vill du ta bort den här låten helt från servern?')) { closeContextMenu(); return; }
-    const t = getTrack(ctxTrackId);
-    if (t) {
-      // 1. Försök radera låten från Supabase Databasen
-      await supabase.from('tracks').delete().eq('id', ctxTrackId);
-      
-      // 2. Försök radera den råa filen ur Supabase Storage om vi kan lista ut namnet
-      try {
-        const urlParts = t.url.split('/');
-        const storageFileName = urlParts[urlParts.length - 1];
-        await supabase.storage.from('music').remove([storageFileName]);
-      } catch(err) { console.error("Kunde inte radera fil från storage:", err); }
+  if (!confirm('Ta bort låten?')) { closeContextMenu(); return; }
+  const idx = state.tracks.findIndex(t => t.id === ctxTrackId);
+  if (idx !== -1) {
+    const track = state.tracks[idx];
+    const fileUrlParts = track.url.split('/');
+    const fileName = fileUrlParts[fileUrlParts.length - 1];
 
-      const idx = state.tracks.findIndex(x => x.id === ctxTrackId);
-      if (idx !== -1) state.tracks.splice(idx, 1);
-      if (state.currentTrackId === ctxTrackId) { state.currentTrackId = null; audio.src = ''; state.isPlaying = false; updatePlayIcon(); }
-    }
+    await supabase.storage.from('music').remove([fileName]);
+    await supabase.from('tracks').delete().eq('id', ctxTrackId);
+
+    state.tracks.splice(idx, 1);
+    if (state.currentTrackId === ctxTrackId) { state.currentTrackId = null; audio.src = ''; }
   }
-  renderAll(); 
+  renderAll();
   closeContextMenu();
 }
 
@@ -1202,7 +1197,9 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
 });
 
-// STARTA APPEN OCH HÄMTA DATA
+document.getElementById('playlistName').addEventListener('keydown', e => { if (e.key === 'Enter') confirmNewPlaylist(); });
+
+audio.volume = state.volume;
 load();
 </script>
 </body>
