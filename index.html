@@ -688,7 +688,7 @@ async function load() {
   } catch(e) {}
 }
 
-function uid() { return Math.floor(Date.now() + Math.random() * 100000); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
   
 function formatTime(s) {
   if (isNaN(s)) return '0:00';
