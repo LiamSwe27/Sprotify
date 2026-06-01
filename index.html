@@ -635,7 +635,7 @@
 <script>
 const supabaseUrl = "https://zsgvkgiakfadrlhfjhjv.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzZ3ZrZ2lha2ZhZHJsaGZqaGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzMzE2NTUsImV4cCI6MjA5NTkwNzY1NX0.etPjB4_FrMQqRxfOPOrHmqpLyMYla3rO_xBVt-c0FFM";
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let state = {
   tracks: [],
@@ -660,10 +660,10 @@ const audio = document.getElementById('audioPlayer');
 
 async function load() {
   try {
-    const { data: playlistsData } = await supabase.from('playlists').select('*');
+    const { data: playlistsData } = await supabaseClient.from('playlists').select('*');
     state.playlists = playlistsData || [];
 
-    const { data: tracksData } = await supabase.from('tracks').select('*');
+    const { data: tracksData } = await supabaseClient.from('tracks').select('*');
     state.tracks = tracksData || [];
 
     const savedVolume = localStorage.getItem('soundwave_volume');
@@ -717,7 +717,7 @@ function getPlaylist(id) { return state.playlists.find(p => p.id === id); }
 function getTrack(id) { return state.tracks.find(t => t.id === id); }
 
 function coverEmoji(idx) {
-  const emojis = ['🎵','🎶','🎸','🥁','🎹','🎺','violin','🎤','🎧','🎼'];
+  const emojis = ['🎵','🎶','🎸','🥁','🎹','🎺','🎻','🎤','🎧','🎼'];
   return emojis[idx % emojis.length];
 }
 
@@ -847,7 +847,7 @@ function buildTrackList(tracks, playlistId) {
 
   const header = document.createElement('div');
   header.className = 'track-list-header';
-  header.innerHTML = `<span>35</span><span>Titel</span><span>Spellista</span><span>Tid</span>`;
+  header.innerHTML = `<span>#</span><span>Titel</span><span>Spellista</span><span>Tid</span>`;
   container.appendChild(header);
 
   tracks.forEach((t, i) => {
@@ -1061,7 +1061,7 @@ async function confirmUpload() {
       playlistId = uid();
       pl = { id: playlistId, name: plName, desc: '' };
       state.playlists.push(pl);
-      await supabase.from('playlists').insert([pl]);
+      await supabaseClient.from('playlists').insert([pl]);
     } else {
       playlistId = pl.id;
     }
@@ -1073,13 +1073,13 @@ async function confirmUpload() {
     const fileExt = file.name.split('.').pop();
     const filePath = `${id}.${fileExt}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
       .from('music')
       .upload(filePath, file);
 
     if (uploadError) continue;
 
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = supabaseClient.storage
       .from('music')
       .getPublicUrl(filePath);
 
@@ -1105,7 +1105,7 @@ async function confirmUpload() {
     });
 
     state.tracks.push(track);
-    await supabase.from('tracks').insert([track]);
+    await supabaseClient.from('tracks').insert([track]);
   }
 
   closeModal('uploadModal');
@@ -1121,7 +1121,7 @@ async function confirmNewPlaylist() {
   if (!name) return;
   const pl = { id: uid(), name, desc: document.getElementById('playlistDesc').value.trim() };
   state.playlists.push(pl);
-  await supabase.from('playlists').insert([pl]);
+  await supabaseClient.from('playlists').insert([pl]);
   closeModal('playlistModal');
   showView('playlist', pl.id);
 }
@@ -1151,7 +1151,7 @@ async function ctxAddToPlaylist() {
   if (!pl) {
     pl = { id: uid(), name, desc: '' };
     state.playlists.push(pl);
-    await supabase.from('playlists').insert([pl]);
+    await supabaseClient.from('playlists').insert([pl]);
   }
   const t = getTrack(ctxTrackId);
   if (t) {
@@ -1165,7 +1165,7 @@ async function ctxAddToPlaylist() {
     if (!playlistArray.includes(pl.id)) {
       playlistArray.push(pl.id);
       t.playlists = playlistArray;
-      await supabase.from('tracks').update({ playlists: playlistArray }).eq('id', t.id);
+      await supabaseClient.from('tracks').update({ playlists: playlistArray }).eq('id', t.id);
     }
   }
   renderAll();
@@ -1181,8 +1181,8 @@ async function ctxDelete() {
     const fileUrlParts = track.url.split('/');
     const fileName = fileUrlParts[fileUrlParts.length - 1];
 
-    await supabase.storage.from('music').remove([fileName]);
-    await supabase.from('tracks').delete().eq('id', ctxTrackId);
+    await supabaseClient.storage.from('music').remove([fileName]);
+    await supabaseClient.from('tracks').delete().eq('id', ctxTrackId);
 
     state.tracks.splice(idx, 1);
     if (state.currentTrackId === ctxTrackId) { state.currentTrackId = null; audio.src = ''; }
