@@ -688,8 +688,8 @@ async function load() {
   } catch(e) {}
 }
 
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-
+function uid() { return Math.floor(Date.now() + Math.random() * 100000); }
+  
 function formatTime(s) {
   if (isNaN(s)) return '0:00';
   const m = Math.floor(s / 60), sec = Math.floor(s % 60);
@@ -1077,7 +1077,10 @@ async function confirmUpload() {
       .from('music')
       .upload(filePath, file);
 
-    if (uploadError) continue;
+    if (uploadError) {
+      console.error("Storage-fel:", uploadError);
+      continue;
+    }
 
     const { data: urlData } = supabaseClient.storage
       .from('music')
@@ -1091,27 +1094,47 @@ async function confirmUpload() {
       artist: 'Okänd artist',
       url: publicUrl,
       playlists: playlistId ? [playlistId] : [],
-      duration: 0
+      duration: 0.0 // Sätts som ett decimaltal från start
     };
 
-    const tmpAudio = new Audio(publicUrl);
-    await new Promise((resolve) => {
-      tmpAudio.addEventListener('loadedmetadata', () => {
-        track.duration = tmpAudio.duration;
-        resolve();
+    // Försök hämta exakt låtlängd från ljudfilen innan vi sparar till databasen
+    try {
+      const tmpAudio = new Audio(publicUrl);
+      await new Promise((resolve) => {
+        tmpAudio.addEventListener('loadedmetadata', () => {
+          if (tmpAudio.duration && !isNaN(tmpAudio.duration)) {
+            track.duration = parseFloat(tmpAudio.duration);
+          }
+          resolve();
+        });
+        tmpAudio.addEventListener('error', () => resolve());
+        setTimeout(resolve, 2000); // Gå vidare efter 2 sekunder om den inte laddat
       });
-      tmpAudio.addEventListener('error', () => resolve());
-      setTimeout(resolve, 3000);
-    });
+    } catch (e) {
+      track.duration = 0.0;
+    }
 
-    state.tracks.push(track);
-    await supabaseClient.from('tracks').insert([track]);
+    const { error: dbError } = await supabaseClient.from('tracks').insert([track]);
+    if (dbError) {
+      console.error("Databas-fel vid sparande av låt:", dbError);
+    } else {
+      state.tracks.push(track);
+    }
   }
 
   closeModal('uploadModal');
   document.getElementById('uploadPlaylist').value = '';
   pendingFiles = [];
   showView('library');
+}
+
+function seekTo(e) {
+  if (!audio.src || isNaN(audio.duration) || !isFinite(audio.duration) || audio.duration === 0) return;
+  
+  const bar = document.getElementById('progressBar');
+  const rect = bar.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  audio.currentTime = pct * audio.duration;
 }
 
 function openNewPlaylist() { document.getElementById('playlistName').value = ''; document.getElementById('playlistDesc').value = ''; document.getElementById('playlistModal').classList.add('open'); setTimeout(() => document.getElementById('playlistName').focus(), 100); }
