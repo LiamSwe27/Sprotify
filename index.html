@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght=300;400;500;700&display=swap');
 
   :root {
     --green: #1db954;
@@ -527,7 +527,7 @@ function renderTrackTable(tracks, target) {
 function populateUploadPlaylistSelect() {
   const sel = document.getElementById('uploadPlaylistSelect'); if(!sel) return;
   sel.innerHTML = '<option value="">-- Välj ingen --</option><option value="new_custom_playlist">➕ Skapa ny spellista...</option>';
-  state.playlists.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.name}</option>'; });
+  state.playlists.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
 }
 function toggleNewPlaylistInput(val) { document.getElementById('newPlaylistInputContainer').style.display = (val === 'new_custom_playlist') ? 'block' : 'none'; }
 
@@ -591,7 +591,6 @@ async function confirmUpload() {
       coverUrl = supabaseClient.storage.from('track-covers').getPublicUrl(imgName).data.publicUrl;
     }
 
-    // NU SPARAS LYRICS-KOLUMNEN I SUPABASE VID UPLOAD!
     const { data } = await supabaseClient.from('tracks').insert({ 
       id: pf.id, 
       title: pf.name, 
@@ -722,7 +721,7 @@ function ctxEdit() {
   editingTrackId = track.id; editingTrackNewImg = null;
   document.getElementById('editTrackName').value = track.title;
   document.getElementById('editTrackArtist').value = track.artist;
-  document.getElementById('editTrackLyrics').value = track.lyrics || ''; // Laddar in texten i rutan
+  document.getElementById('editTrackLyrics').value = track.lyrics || '';
   document.getElementById('editTrackModal').classList.add('open');
 }
 function handleEditTrackImg(i) { if(i.files && i.files[0]) editingTrackNewImg = i.files[0]; }
@@ -732,7 +731,6 @@ async function confirmEditTrack() {
   const artist = document.getElementById('editTrackArtist').value.trim();
   const lyrics = document.getElementById('editTrackLyrics').value.trim();
   
-  // SKICKAR OCH SPARAR TEXTEN REALTID I SUPABASE DATABASEN!
   await supabaseClient.from('tracks').update({ title, artist, lyrics }).eq('id', editingTrackId);
   
   const idx = state.tracks.findIndex(t => t.id === editingTrackId);
