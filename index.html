@@ -701,8 +701,29 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="editPlaylistModal">
+  <div class="modal">
+    <h2>Redigera spellista</h2>
+    <label class="upload-label">Omslagsbild</label>
+    <div class="image-preview-box" onclick="document.getElementById('editPlaylistImgInput').click()">
+      <span class="img-placeholder" id="editPlaylistImgPlaceholder">🎵</span>
+      <img id="editPlaylistImgPreview" src="" alt="" style="display:none">
+      <div class="img-overlay">Byt bild</div>
+    </div>
+    <input type="file" id="editPlaylistImgInput" accept="image/*" style="display:none" onchange="handleEditPlaylistImg(this)">
+    <label class="upload-label">Spellistans namn</label>
+    <input type="text" id="editPlaylistName">
+    <label class="upload-label">Kort beskrivning</label>
+    <input type="text" id="editPlaylistDesc">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('editPlaylistModal')">Avbryt</button>
+      <button class="btn-confirm" onclick="confirmEditPlaylist()">Spara ändringar</button>
+    </div>
+  </div>
+</div>
+
 <div class="context-menu" id="contextMenu">
-  <div class="ctx-item" onclick="ctxPlay()">▶ Spela</div>
+  <div class="ctx-item" id="ctxPlayOpt" onclick="ctxPlay()">▶ Spela</div>
   <div class="ctx-item" onclick="ctxEdit()">✏ Redigera</div>
   <div class="ctx-item danger" onclick="ctxDelete()">🗑 Ta bort</div>
 </div>
@@ -724,8 +745,11 @@ let state = {
 
 let pendingFiles = []; 
 let ctxTrackId = null;
+let ctxType = 'track';
 let editingTrackId = null;
 let editingTrackNewImg = null;
+let editingPlaylistId = null;
+let editingPlaylistNewImg = null;
 let newPlaylistImgFile = null;
 const audio = document.getElementById('audioPlayer');
 
@@ -777,6 +801,7 @@ function renderPlaylistSidebar() {
     const div = document.createElement('div');
     div.className = 'playlist-item' + (state.currentPlaylistId === p.id ? ' active' : '');
     div.onclick = () => showView('playlist', p.id);
+    div.oncontextmenu = (e) => openContextMenu(e, p.id, 'playlist');
     
     const thumb = document.createElement('div');
     thumb.className = 'playlist-item-thumb';
@@ -811,6 +836,7 @@ function renderMain() {
       const card = document.createElement('div');
       card.className = 'card';
       card.onclick = () => showView('playlist', p.id);
+      card.oncontextmenu = (e) => openContextMenu(e, p.id, 'playlist');
       card.innerHTML = `
         <div class="card-img">${p.cover_url ? `<img src="${p.cover_url}">` : coverEmoji(idx)}</div>
         <div class="card-name">${p.name}</div>
@@ -876,7 +902,7 @@ function renderTrackTable(tracks, target) {
     const row = document.createElement('div');
     row.className = 'track-row' + (state.currentTrackId === t.id ? ' playing' : '');
     row.onclick = () => playList(tracks, i);
-    row.oncontextmenu = (e) => openContextMenu(e, t.id);
+    row.oncontextmenu = (e) => openContextMenu(e, t.id, 'track');
 
     row.innerHTML = `
       <div class="track-num">
@@ -1103,10 +1129,20 @@ function setVolume(e) {
 }
 
 /* ─── CONTEXT SYSTEM ─── */
-function openContextMenu(e, id) {
+function openContextMenu(e, id, type = 'track') {
   e.preventDefault();
   ctxTrackId = id;
+  ctxType = type;
+  
   const menu = document.getElementById('contextMenu');
+  const playOpt = document.getElementById('ctxPlayOpt');
+  
+  if (type === 'playlist') {
+    playOpt.style.display = 'none';
+  } else {
+    playOpt.style.display = 'block';
+  }
+  
   menu.style.top = e.clientY + 'px';
   menu.style.left = e.clientX + 'px';
   menu.classList.add('open');
@@ -1115,24 +1151,42 @@ function openContextMenu(e, id) {
 
 function closeContextMenu() { document.getElementById('contextMenu').classList.remove('open'); document.removeEventListener('click', closeContextMenu); }
 
-function ctxPlay() { if(ctxTrackId) loadTrack(ctxTrackId); }
+function ctxPlay() { if(ctxType === 'track' && ctxTrackId) loadTrack(ctxTrackId); }
 
 function ctxEdit() {
-  const track = state.tracks.find(t => t.id === ctxTrackId);
-  if(!track) return;
-  editingTrackId = track.id;
-  editingTrackNewImg = null;
-  document.getElementById('editTrackName').value = track.title;
-  document.getElementById('editTrackArtist').value = track.artist;
-  if(track.cover_url) {
-    document.getElementById('editTrackImgPreview').src = track.cover_url;
-    document.getElementById('editTrackImgPreview').style.display = 'block';
-    document.getElementById('editTrackImgPlaceholder').style.display = 'none';
+  if (ctxType === 'track') {
+    const track = state.tracks.find(t => t.id === ctxTrackId);
+    if(!track) return;
+    editingTrackId = track.id;
+    editingTrackNewImg = null;
+    document.getElementById('editTrackName').value = track.title;
+    document.getElementById('editTrackArtist').value = track.artist;
+    if(track.cover_url) {
+      document.getElementById('editTrackImgPreview').src = track.cover_url;
+      document.getElementById('editTrackImgPreview').style.display = 'block';
+      document.getElementById('editTrackImgPlaceholder').style.display = 'none';
+    } else {
+      document.getElementById('editTrackImgPreview').style.display = 'none';
+      document.getElementById('editTrackImgPlaceholder').style.display = 'block';
+    }
+    document.getElementById('editTrackModal').classList.add('open');
   } else {
-    document.getElementById('editTrackImgPreview').style.display = 'none';
-    document.getElementById('editTrackImgPlaceholder').style.display = 'block';
+    const pl = state.playlists.find(p => p.id === ctxTrackId);
+    if(!pl) return;
+    editingPlaylistId = pl.id;
+    editingPlaylistNewImg = null;
+    document.getElementById('editPlaylistName').value = pl.name;
+    document.getElementById('editPlaylistDesc').value = pl.description || '';
+    if(pl.cover_url) {
+      document.getElementById('editPlaylistImgPreview').src = pl.cover_url;
+      document.getElementById('editPlaylistImgPreview').style.display = 'block';
+      document.getElementById('editPlaylistImgPlaceholder').style.display = 'none';
+    } else {
+      document.getElementById('editPlaylistImgPreview').style.display = 'none';
+      document.getElementById('editPlaylistImgPlaceholder').style.display = 'block';
+    }
+    document.getElementById('editPlaylistModal').classList.add('open');
   }
-  document.getElementById('editTrackModal').classList.add('open');
 }
 
 function handleEditTrackImg(input) {
@@ -1163,10 +1217,56 @@ async function confirmEditTrack() {
   renderAll();
 }
 
+function handleEditPlaylistImg(input) {
+  if (input.files && input.files[0]) {
+    editingPlaylistNewImg = input.files[0];
+    document.getElementById('editPlaylistImgPreview').src = URL.createObjectURL(editingPlaylistNewImg);
+    document.getElementById('editPlaylistImgPreview').style.display = 'block';
+    document.getElementById('editPlaylistImgPlaceholder').style.display = 'none';
+  }
+}
+
+async function confirmEditPlaylist() {
+  const name = document.getElementById('editPlaylistName').value.trim();
+  const description = document.getElementById('editPlaylistDesc').value.trim();
+  if(!name) return;
+  
+  let coverUrl = state.playlists.find(p => p.id === editingPlaylistId).cover_url;
+
+  if (editingPlaylistNewImg) {
+    const imgName = `${editingPlaylistId}_editpcover.${editingPlaylistNewImg.name.split('.').pop()}`;
+    await supabaseClient.storage.from('playlist-covers').upload(imgName, editingPlaylistNewImg, { upsert: true });
+    coverUrl = supabaseClient.storage.from('playlist-covers').getPublicUrl(imgName).data.publicUrl;
+  }
+
+  await supabaseClient.from('playlists').update({ name, description, cover_url: coverUrl }).eq('id', editingPlaylistId);
+  
+  const idx = state.playlists.findIndex(p => p.id === editingPlaylistId);
+  if(idx !== -1) { 
+    state.playlists[idx].name = name; 
+    state.playlists[idx].description = description; 
+    state.playlists[idx].cover_url = coverUrl; 
+  }
+  
+  closeModal('editPlaylistModal');
+  renderAll();
+}
+
 async function ctxDelete() {
   if(!ctxTrackId) return;
-  await supabaseClient.from('tracks').delete().eq('id', ctxTrackId);
-  state.tracks = state.tracks.filter(t => t.id !== ctxTrackId);
+  
+  if (ctxType === 'track') {
+    await supabaseClient.from('tracks').delete().eq('id', ctxTrackId);
+    state.tracks = state.tracks.filter(t => t.id !== ctxTrackId);
+  } else {
+    await supabaseClient.from('playlists').delete().eq('id', ctxTrackId);
+    state.playlists = state.playlists.filter(p => p.id !== ctxTrackId);
+    
+    if(state.currentPlaylistId === ctxTrackId) {
+      state.view = 'home';
+      state.currentPlaylistId = null;
+    }
+  }
   renderAll();
 }
 </script>
