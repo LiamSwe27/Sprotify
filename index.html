@@ -30,11 +30,11 @@
     color: var(--text);
     height: 100vh;
     display: grid;
-    grid-template-columns: 200px 1fr; /* Utzoomad/smalare sidebar */
-    grid-template-rows: 1fr 80px;      /* Mer kompakt spelare */
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: 1fr 80px;
     overflow: hidden;
     user-select: none;
-    font-size: 13px; /* Globalt mer utzoomat */
+    font-size: 13px;
   }
 
   /* ── LÖSENORDSSKÄRM ── */
@@ -66,7 +66,7 @@
   .lyrics-artist { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 30px; }
   .lyrics-content { font-size: 26px; font-weight: 700; line-height: 1.5; color: #fff; white-space: pre-wrap; letter-spacing: -0.5px; }
 
-  /* ── SIDEBAR (UTZOOMAD) ── */
+  /* ── SIDEBAR ── */
   .sidebar {
     background: var(--sidebar); grid-row: 1; display: flex; flex-direction: column; padding: 12px 6px; overflow-y: auto; border-right: 1px solid var(--border);
   }
@@ -92,7 +92,7 @@
   .new-playlist-btn { margin: 4px 12px; padding: 8px 10px; background: transparent; border: 1px dashed var(--border); color: var(--muted); border-radius: 4px; cursor: pointer; font-size: 12px; font-family: inherit; display: flex; align-items: center; gap: 6px; width: calc(100% - 24px); }
   .new-playlist-btn:hover { border-color: var(--green); color: var(--green); background: rgba(29, 185, 84, 0.03); }
 
-  /* ── MAIN CONTENT (UTZOOMAD) ── */
+  /* ── MAIN CONTENT ── */
   .main { grid-row: 1; overflow-y: auto; background: linear-gradient(180deg, #12121f 0%, var(--bg) 300px); }
   .main-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; position: sticky; top: 0; background: rgba(10,10,10,0.8); backdrop-filter: blur(12px); z-index: 10; }
   .view-title { font-size: 22px; font-weight: 700; }
@@ -103,7 +103,7 @@
 
   .content-area { padding: 0 24px 32px; }
 
-  /* ── PLAYLIST HEADER (UTZOOMAD) ── */
+  /* ── PLAYLIST HEADER ── */
   .playlist-header { display: flex; align-items: flex-end; gap: 20px; padding: 16px 0 24px; }
   .playlist-cover { width: 160px; height: 160px; border-radius: 6px; background: linear-gradient(135deg, #282828, #121212); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 16px rgba(0,0,0,0.5); font-size: 50px; overflow: hidden; }
   .playlist-cover img { width: 100%; height: 100%; object-fit: cover; }
@@ -115,7 +115,7 @@
   .play-all-btn:hover { background: var(--green-dark); }
   .play-all-btn svg { width: 22px; height: 22px; }
 
-  /* ── LÅTLISTA (KOMPAKT & UTZOOMAD) ── */
+  /* ── LÅTLISTA ── */
   .track-list-header { display: grid; grid-template-columns: 36px 1fr 1fr 60px; padding: 0 12px 6px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
   .track-row { display: grid; grid-template-columns: 36px 1fr 1fr 60px; padding: 6px 12px; border-radius: 4px; align-items: center; cursor: pointer; position: relative; }
   .track-row:hover { background: var(--card-hover); }
@@ -137,7 +137,7 @@
 
   .section-title { font-size: 16px; font-weight: 700; margin: 16px 0 12px; }
   
-  /* ── CARDS GRID (UTZOOMAD) ── */
+  /* ── CARDS GRID ── */
   .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
   .card { background: var(--card); border-radius: 6px; padding: 12px; cursor: pointer; }
   .card:hover { background: var(--card-hover); }
@@ -146,7 +146,7 @@
   .card-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .card-sub { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
 
-  /* ── COMPACT PLAYER FOOTER ── */
+  /* ── PLAYER FOOTER ── */
   .player { grid-column: 1 / -1; grid-row: 2; background: var(--player-bg); border-top: 1px solid var(--border); display: grid; grid-template-columns: 240px 1fr 240px; align-items: center; padding: 0 16px; z-index: 20; }
   .now-playing { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .now-thumb { width: 44px; height: 44px; border-radius: 3px; background: var(--card-hover); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--muted); font-size: 16px; }
@@ -166,7 +166,7 @@
   .play-pause-btn svg { width: 14px; height: 14px; }
 
   .progress-bar-area { display: flex; align-items: center; gap: 10px; width: 100%; }
-  .time-label { font-size: 10px; color: var(--muted); width: 30px; text-align: center; flex-shrink: 0; }
+  .time-label { font-size: 10px; color: var(--muted); width: 35px; text-align: center; flex-shrink: 0; }
   .progress-bar { flex: 1; height: 3px; background: #333; border-radius: 2px; cursor: pointer; position: relative; }
   .progress-fill { height: 100%; background: var(--green); border-radius: 2px; }
   .progress-bar:hover { height: 5px; }
@@ -181,7 +181,7 @@
   .volume-fill { height: 100%; background: var(--muted); border-radius: 2px; }
   .volume-bar:hover .volume-fill { background: var(--green); }
 
-  /* ── MODALER (UTZOOMAD) ── */
+  /* ── MODALER ── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100; display: none; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: #282828; border-radius: 8px; padding: 24px; width: 440px; max-width: 92vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 32px rgba(0,0,0,0.6); }
@@ -499,6 +499,12 @@ function renderMain() {
   }
 }
 
+function formatTime(secs) {
+  if (isNaN(secs)) return "0:00";
+  const m = Math.floor(secs / 60), s = Math.floor(secs % 60);
+  return m + ':' + String(s).padStart(2, '0');
+}
+
 function renderTrackTable(tracks, target) {
   if (tracks.length === 0) { target.innerHTML += `<div class="empty-state">Inga låtar här än</div>`; return; }
   const head = document.createElement('div'); head.className = 'track-list-header'; head.innerHTML = `<div>#</div><div>Titel</div><div>Artist</div><div style="text-align:right">Tid</div>`; target.appendChild(head);
@@ -507,15 +513,21 @@ function renderTrackTable(tracks, target) {
     const row = document.createElement('div'); row.className = 'track-row' + (state.currentTrackId === t.id ? ' playing' : '');
     row.onclick = () => playList(tracks, i);
     row.oncontextmenu = (e) => openContextMenu(e, t.id);
-    row.innerHTML = `<div class="track-num"><span class="track-num-text">${i+1}</span><span class="track-play-icon">▶</span></div><div class="track-info"><div class="track-thumb">${t.cover_url ? `<img src="${t.cover_url}">` : '🎵'}</div><div class="track-name">${t.title}</div></div><div class="track-artist">${t.artist || 'Okänd'}</div><div class="track-duration">3:30</div>`;
+    row.innerHTML = `<div class="track-num"><span class="track-num-text">${i+1}</span><span class="track-play-icon">▶</span></div><div class="track-info"><div class="track-thumb">${t.cover_url ? `<img src="${t.cover_url}">` : '🎵'}</div><div class="track-name">${t.title}</div></div><div class="track-artist">${t.artist || 'Okänd'}</div><div class="track-duration" id="dur-${t.id}">--</div>`;
     target.appendChild(row);
+    
+    const tempAudio = new Audio(t.audio_url);
+    tempAudio.onloadedmetadata = () => {
+      const durationEl = document.getElementById(`dur-${t.id}`);
+      if(durationEl) durationEl.textContent = formatTime(tempAudio.duration);
+    };
   });
 }
 
 function populateUploadPlaylistSelect() {
   const sel = document.getElementById('uploadPlaylistSelect'); if(!sel) return;
   sel.innerHTML = '<option value="">-- Välj ingen --</option><option value="new_custom_playlist">➕ Skapa ny spellista...</option>';
-  state.playlists.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
+  state.playlists.forEach(p => { sel.innerHTML += `<option value="${p.id}">${p.name}</option>'; });
 }
 function toggleNewPlaylistInput(val) { document.getElementById('newPlaylistInputContainer').style.display = (val === 'new_custom_playlist') ? 'block' : 'none'; }
 
@@ -579,7 +591,17 @@ async function confirmUpload() {
       coverUrl = supabaseClient.storage.from('track-covers').getPublicUrl(imgName).data.publicUrl;
     }
 
-    const { data } = await supabaseClient.from('tracks').insert({ id: pf.id, title: pf.name, artist: pf.artist, audio_url: audioUrl, cover_url: coverUrl, playlists: targetPlaylistId, lyrics: pf.lyrics }).select().single();
+    // NU SPARAS LYRICS-KOLUMNEN I SUPABASE VID UPLOAD!
+    const { data } = await supabaseClient.from('tracks').insert({ 
+      id: pf.id, 
+      title: pf.name, 
+      artist: pf.artist, 
+      audio_url: audioUrl, 
+      cover_url: coverUrl, 
+      playlists: targetPlaylistId, 
+      lyrics: pf.lyrics 
+    }).select().single();
+    
     if (data) state.tracks.push(data);
   }
 
@@ -634,6 +656,10 @@ function loadTrack(id) {
   state.currentTrackId = id; audio.src = track.audio_url;
   document.getElementById('nowTitle').textContent = track.title; document.getElementById('nowArtist').textContent = track.artist || '–';
   document.getElementById('nowThumb').innerHTML = track.cover_url ? `<img src="${track.cover_url}">` : '🎵';
+  
+  document.getElementById('currentTime').textContent = "0:00";
+  document.getElementById('totalTime').textContent = "0:00";
+  
   audio.play(); state.isPlaying = true; updatePlayButton(); updateLyricsDisplay(); renderAll();
 }
 function togglePlay() {
@@ -645,7 +671,6 @@ function updatePlayButton() { document.getElementById('playIcon').innerHTML = st
 function nextTrack() { if(state.queue.length > 0) { state.queueIndex = (state.queueIndex + 1) % state.queue.length; loadTrack(state.queue[state.queueIndex].id); } }
 function prevTrack() { if(state.queue.length > 0) { state.queueIndex = (state.queueIndex - 1 + state.queue.length) % state.queue.length; loadTrack(state.queue[state.queueIndex].id); } }
 
-// REPEAT FUNKTION
 function toggleRepeat() {
   state.isRepeat = !state.isRepeat;
   document.getElementById('repeatBtn').classList.toggle('active', state.isRepeat);
@@ -653,10 +678,15 @@ function toggleRepeat() {
 
 function setupAudioListeners() {
   audio.ontimeupdate = () => {
+    if(!audio.duration) return;
     document.getElementById('progressFill').style.width = ((audio.currentTime / audio.duration) * 100) + '%';
-    const m = Math.floor(audio.currentTime/60), s = Math.floor(audio.currentTime%60);
-    document.getElementById('currentTime').textContent = m + ':' + String(s).padStart(2, '0');
+    document.getElementById('currentTime').textContent = formatTime(audio.currentTime);
   };
+  
+  audio.onloadedmetadata = () => {
+    document.getElementById('totalTime').textContent = formatTime(audio.duration);
+  };
+
   audio.onended = () => {
     if(state.isRepeat) {
       audio.currentTime = 0;
@@ -692,7 +722,7 @@ function ctxEdit() {
   editingTrackId = track.id; editingTrackNewImg = null;
   document.getElementById('editTrackName').value = track.title;
   document.getElementById('editTrackArtist').value = track.artist;
-  document.getElementById('editTrackLyrics').value = track.lyrics || '';
+  document.getElementById('editTrackLyrics').value = track.lyrics || ''; // Laddar in texten i rutan
   document.getElementById('editTrackModal').classList.add('open');
 }
 function handleEditTrackImg(i) { if(i.files && i.files[0]) editingTrackNewImg = i.files[0]; }
@@ -701,9 +731,13 @@ async function confirmEditTrack() {
   const title = document.getElementById('editTrackName').value.trim();
   const artist = document.getElementById('editTrackArtist').value.trim();
   const lyrics = document.getElementById('editTrackLyrics').value.trim();
+  
+  // SKICKAR OCH SPARAR TEXTEN REALTID I SUPABASE DATABASEN!
   await supabaseClient.from('tracks').update({ title, artist, lyrics }).eq('id', editingTrackId);
+  
   const idx = state.tracks.findIndex(t => t.id === editingTrackId);
   if(idx !== -1) { state.tracks[idx].title = title; state.tracks[idx].artist = artist; state.tracks[idx].lyrics = lyrics; }
+  
   closeModal('editTrackModal'); updateLyricsDisplay(); renderAll();
 }
 
