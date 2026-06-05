@@ -844,7 +844,7 @@ async function load() {
     audio.volume = state.volume;
     document.getElementById('volumeFill').style.width = (state.volume * 100) + '%';
     document.getElementById('shuffleBtn').classList.toggle('active', state.shuffle);
-    document.getElementById('repeatBtn').classList.toggle('active', state.repeat !== 'none');
+    updateRepeatBtn();
     renderAll();
   } catch(e) { console.error(e); }
 }
@@ -1122,8 +1122,18 @@ function toggleShuffle() {
 function toggleRepeat() {
   const modes = ['none','all','one'];
   state.repeat = modes[(modes.indexOf(state.repeat) + 1) % 3];
-  document.getElementById('repeatBtn').classList.toggle('active', state.repeat !== 'none');
+  updateRepeatBtn();
   localStorage.setItem('sprotify_repeat', state.repeat);
+}
+function updateRepeatBtn() {
+  const btn = document.getElementById('repeatBtn');
+  btn.classList.toggle('active', state.repeat !== 'none');
+  btn.title = state.repeat === 'one' ? 'Upprepa låt' : state.repeat === 'all' ? 'Upprepa alla' : 'Upprepa';
+  // Show "1" badge when repeat-one is active
+  btn.innerHTML = state.repeat === 'one'
+    ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg><span style="font-size:9px;font-weight:700;position:absolute;bottom:0;right:0;line-height:1;color:var(--green)">1</span>`
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>`;
+  btn.style.position = 'relative';
 }
 function seekTo(e) {
   if (!audio.src || isNaN(audio.duration) || !isFinite(audio.duration) || audio.duration === 0) return;
@@ -1150,9 +1160,28 @@ audio.addEventListener('timeupdate', () => {
   document.getElementById('totalTime').textContent = formatTime(audio.duration);
 });
 audio.addEventListener('ended', () => {
-  if (state.repeat === 'one') { audio.currentTime = 0; audio.play(); return; }
-  if (state.queueIndex < state.queue.length - 1 || state.repeat === 'all') nextTrack();
-  else { state.isPlaying = false; updatePlayIcon(); renderAll(); }
+  if (state.repeat === 'one') {
+    audio.currentTime = 0;
+    audio.play();
+    return;
+  }
+  if (state.queue.length === 0) {
+    state.isPlaying = false; updatePlayIcon(); renderAll();
+    return;
+  }
+  if (state.repeat === 'all') {
+    // Loop the whole queue
+    state.queueIndex = (state.queueIndex + 1) % state.queue.length;
+    loadTrack(state.queue[state.queueIndex]);
+  } else {
+    // repeat === 'none': advance if not last track, stop at end
+    if (state.queueIndex < state.queue.length - 1) {
+      state.queueIndex++;
+      loadTrack(state.queue[state.queueIndex]);
+    } else {
+      state.isPlaying = false; updatePlayIcon(); renderAll();
+    }
+  }
 });
 audio.addEventListener('play', () => { state.isPlaying = true; updatePlayIcon(); renderAll(); });
 audio.addEventListener('pause', () => { state.isPlaying = false; updatePlayIcon(); renderAll(); });
