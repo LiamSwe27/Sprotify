@@ -413,8 +413,17 @@ let editingTrackNewImg = null;
 let newPlaylistImgFile = null;
 const audio = document.getElementById('audioPlayer');
 
-function checkPassword() {
-  if(document.getElementById('passInput').value === 'gigglegiggle') {
+async function checkPassword() {
+  const userInput = document.getElementById('passInput').value;
+  
+  const msgBuffer = new TextEncoder().encode(userInput);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const userHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const correctHash = "46c4f02b37803d36db6ffb7e41b9b940e4f20e4b89694e995f32b7194f41b312";
+
+  if(userHash === correctHash) {
     document.getElementById('loginScreen').style.display = 'none';
     load();
   } else {
