@@ -415,19 +415,35 @@ const audio = document.getElementById('audioPlayer');
 
 async function checkPassword() {
   const userInput = document.getElementById('passInput').value;
+  const loginBtn = document.querySelector('#loginScreen button');
   
-  const msgBuffer = new TextEncoder().encode(userInput);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const userHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  if (!userInput) return;
+  
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Verifierar...';
 
-  const correctHash = "46c4f02b37803d36db6ffb7e41b9b940e4f20e4b89694e995f32b7194f41b312";
+  try {
+    const { data, error } = await supabaseClient
+      .from('secrets')
+      .select('value')
+      .eq('key', 'app_password')
+      .single();
 
-  if(userHash === correctHash) {
-    document.getElementById('loginScreen').style.display = 'none';
-    load();
-  } else {
-    alert('Fel lösenord!');
+    if (error) throw error;
+
+    if (data && userInput === data.value) {
+      document.getElementById('loginScreen').style.display = 'none';
+      load(); // Startar appen
+    } else {
+      alert('Fel lösenord!');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Lås upp';
+    }
+  } catch (e) {
+    console.error('Kunde inte verifiera lösenord:', e);
+    alert('Ett fel uppstod vid inloggningen. Försök igen.');
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Lås upp';
   }
 }
 
